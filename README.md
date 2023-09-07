@@ -7,4 +7,9 @@
 <ul>
   <li>mysql:8.0</li>
   <li>wordpressは、最新ver</li>
-</ul
+</ul>
+
+・docker立ち上げ
+docker-compose up -d
+
+・
