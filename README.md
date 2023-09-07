@@ -9,7 +9,8 @@
   <li>wordpressは、最新ver</li>
 </ul>
 
-・docker立ち上げコマンド<br>
+・docker立ち上げコマンド
+
 docker-compose up -d
 
 ・
