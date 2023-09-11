@@ -1,0 +1,23 @@
+{
+  "name": "wp_template_mamp",
+  "version": "1.0.0",
+  "description": ". ├── dist │   ├── css │   ├── fonts │   ├── js │   │   └── lib │   └── svg ├── images │   ├── common │   └── top ├── src │   ├── js │   └── sass │       ├── base │       ├── component │       ├── global │       ├── layout │       └── pages └── templates",
+  "main": "index.js",
+  "scripts": {
+    "sass": "sass src/sass:dist/css/ --style=compressed --watch",
+    "postcss": "postcss dist/css/style.css --use autoprefixer --dir dist/css/ --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "sass": "^1.62.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "postcss-cli": "^10.1.0"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "> 1% in JP"
+  ]
+}
