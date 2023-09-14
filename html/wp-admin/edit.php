@@ -9,11 +9,6 @@
 /** WordPress Administration Bootstrap */
 require_once __DIR__ . '/admin.php';
 
-/**
- * @global string $typenow The post type of the current screen.
- */
-global $typenow;
-
 if ( ! $typenow ) {
 	wp_die( __( 'Invalid post type.' ) );
 }
@@ -81,22 +76,15 @@ if ( $doaction ) {
 		$sendback = admin_url( $parent_file );
 	}
 	$sendback = add_query_arg( 'paged', $pagenum, $sendback );
-	if ( str_contains( $sendback, 'post.php' ) ) {
+	if ( strpos( $sendback, 'post.php' ) !== false ) {
 		$sendback = admin_url( $post_new_file );
 	}
-
-	$post_ids = array();
 
 	if ( 'delete_all' === $doaction ) {
 		// Prepare for deletion of all posts with a specified post status (i.e. Empty Trash).
 		$post_status = preg_replace( '/[^a-z0-9_-]+/i', '', $_REQUEST['post_status'] );
 		// Validate the post status exists.
 		if ( get_post_status_object( $post_status ) ) {
-			/**
-			 * @global wpdb $wpdb WordPress database abstraction object.
-			 */
-			global $wpdb;
-
 			$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_type=%s AND post_status = %s", $post_type, $post_status ) );
 		}
 		$doaction = 'delete';
@@ -108,7 +96,7 @@ if ( $doaction ) {
 		$post_ids = array_map( 'intval', $_REQUEST['post'] );
 	}
 
-	if ( empty( $post_ids ) ) {
+	if ( ! isset( $post_ids ) ) {
 		wp_redirect( $sendback );
 		exit;
 	}
@@ -164,7 +152,7 @@ if ( $doaction ) {
 			}
 			$sendback = add_query_arg( 'untrashed', $untrashed, $sendback );
 
-			remove_filter( 'wp_untrash_post_status', 'wp_untrash_post_set_previous_status', 10 );
+			remove_filter( 'wp_untrash_post_status', 'wp_untrash_post_set_previous_status', 10, 3 );
 
 			break;
 		case 'delete':
@@ -242,7 +230,6 @@ if ( 'wp_block' === $post_type ) {
 	wp_enqueue_style( 'wp-list-reusable-blocks' );
 }
 
-// Used in the HTML title tag.
 $title = $post_type_object->labels->name;
 
 if ( 'post' === $post_type ) {
@@ -294,8 +281,8 @@ if ( 'post' === $post_type ) {
 
 	get_current_screen()->set_help_sidebar(
 		'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
-		'<p>' . __( '<a href="https://wordpress.org/documentation/article/posts-screen/">Documentation on Managing Posts</a>' ) . '</p>' .
-		'<p>' . __( '<a href="https://wordpress.org/support/forums/">Support forums</a>' ) . '</p>'
+		'<p>' . __( '<a href="https://wordpress.org/support/article/posts-screen/">Documentation on Managing Posts</a>' ) . '</p>' .
+		'<p>' . __( '<a href="https://wordpress.org/support/">Support</a>' ) . '</p>'
 	);
 
 } elseif ( 'page' === $post_type ) {
@@ -319,8 +306,8 @@ if ( 'post' === $post_type ) {
 
 	get_current_screen()->set_help_sidebar(
 		'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
-		'<p>' . __( '<a href="https://wordpress.org/documentation/article/pages-screen/">Documentation on Managing Pages</a>' ) . '</p>' .
-		'<p>' . __( '<a href="https://wordpress.org/support/forums/">Support forums</a>' ) . '</p>'
+		'<p>' . __( '<a href="https://wordpress.org/support/article/pages-screen/">Documentation on Managing Pages</a>' ) . '</p>' .
+		'<p>' . __( '<a href="https://wordpress.org/support/">Support</a>' ) . '</p>'
 	);
 
 }
@@ -442,13 +429,8 @@ foreach ( $bulk_counts as $message => $count ) {
 	}
 
 	if ( 'trashed' === $message && isset( $_REQUEST['ids'] ) ) {
-		$ids = preg_replace( '/[^0-9,]/', '', $_REQUEST['ids'] );
-
-		$messages[] = sprintf(
-			'<a href="%1$s">%2$s</a>',
-			esc_url( wp_nonce_url( "edit.php?post_type=$post_type&doaction=undo&action=untrash&ids=$ids", 'bulk-posts' ) ),
-			__( 'Undo' )
-		);
+		$ids        = preg_replace( '/[^0-9,]/', '', $_REQUEST['ids'] );
+		$messages[] = '<a href="' . esc_url( wp_nonce_url( "edit.php?post_type=$post_type&doaction=undo&action=untrash&ids=$ids", 'bulk-posts' ) ) . '">' . __( 'Undo' ) . '</a>';
 	}
 
 	if ( 'untrashed' === $message && isset( $_REQUEST['ids'] ) ) {
@@ -465,10 +447,7 @@ foreach ( $bulk_counts as $message => $count ) {
 }
 
 if ( $messages ) {
-	printf(
-		'<div id="message" class="updated notice is-dismissible"><p>%s</p></div>',
-		implode( ' ', $messages )
-	);
+	echo '<div id="message" class="updated notice is-dismissible"><p>' . implode( ' ', $messages ) . '</p></div>';
 }
 unset( $messages );
 
@@ -503,7 +482,7 @@ if ( $wp_list_table->has_items() ) {
 ?>
 
 <div id="ajax-response"></div>
-<div class="clear"></div>
+<div class="clear" /></div>
 </div>
 
 <?php

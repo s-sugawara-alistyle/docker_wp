@@ -29,17 +29,12 @@ if ( isset( $_GET['action'] ) ) {
 			$id = (int) $_GET['id'];
 			if ( $id > 1 ) {
 				$_POST['allusers'] = array( $id ); // confirm_delete_users() can only handle arrays.
-
-				// Used in the HTML title tag.
-				$title       = __( 'Users' );
-				$parent_file = 'users.php';
-
+				$title             = __( 'Users' );
+				$parent_file       = 'users.php';
 				require_once ABSPATH . 'wp-admin/admin-header.php';
-
 				echo '<div class="wrap">';
 				confirm_delete_users( $_POST['allusers'] );
 				echo '</div>';
-
 				require_once ABSPATH . 'wp-admin/admin-footer.php';
 			} else {
 				wp_redirect( network_admin_url( 'users.php' ) );
@@ -51,10 +46,10 @@ if ( isset( $_GET['action'] ) ) {
 				wp_die( __( 'Sorry, you are not allowed to access this page.' ), 403 );
 			}
 
-			if ( isset( $_POST['action'] ) && isset( $_POST['allusers'] ) ) {
+			if ( ( isset( $_POST['action'] ) || isset( $_POST['action2'] ) ) && isset( $_POST['allusers'] ) ) {
 				check_admin_referer( 'bulk-users-network' );
 
-				$doaction     = $_POST['action'];
+				$doaction     = -1 != $_POST['action'] ? $_POST['action'] : $_POST['action2'];
 				$userfunction = '';
 
 				foreach ( (array) $_POST['allusers'] as $user_id ) {
@@ -64,17 +59,12 @@ if ( isset( $_GET['action'] ) ) {
 								if ( ! current_user_can( 'delete_users' ) ) {
 									wp_die( __( 'Sorry, you are not allowed to access this page.' ), 403 );
 								}
-
-								// Used in the HTML title tag.
 								$title       = __( 'Users' );
 								$parent_file = 'users.php';
-
 								require_once ABSPATH . 'wp-admin/admin-header.php';
-
 								echo '<div class="wrap">';
 								confirm_delete_users( $_POST['allusers'] );
 								echo '</div>';
-
 								require_once ABSPATH . 'wp-admin/admin-footer.php';
 								exit;
 
@@ -94,7 +84,7 @@ if ( isset( $_GET['action'] ) ) {
 								$blogs        = get_blogs_of_user( $user_id, true );
 
 								foreach ( (array) $blogs as $details ) {
-									if ( ! is_main_site( $details->userblog_id ) ) { // Main site is not a spam!
+									if ( get_network()->site_id != $details->userblog_id ) { // Main blog is not a spam!
 										update_blog_status( $details->userblog_id, 'spam', '1' );
 									}
 								}
@@ -216,8 +206,6 @@ if ( $pagenum > $total_pages && $total_pages > 0 ) {
 	wp_redirect( add_query_arg( 'paged', $total_pages ) );
 	exit;
 }
-
-// Used in the HTML title tag.
 $title       = __( 'Users' );
 $parent_file = 'users.php';
 
@@ -240,7 +228,7 @@ get_current_screen()->add_help_tab(
 get_current_screen()->set_help_sidebar(
 	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
 	'<p>' . __( '<a href="https://codex.wordpress.org/Network_Admin_Users_Screen">Documentation on Network Users</a>' ) . '</p>' .
-	'<p>' . __( '<a href="https://wordpress.org/support/forum/multisite/">Support forums</a>' ) . '</p>'
+	'<p>' . __( '<a href="https://wordpress.org/support/forum/multisite/">Support Forums</a>' ) . '</p>'
 );
 
 get_current_screen()->set_screen_reader_content(
@@ -253,9 +241,9 @@ get_current_screen()->set_screen_reader_content(
 
 require_once ABSPATH . 'wp-admin/admin-header.php';
 
-if ( isset( $_REQUEST['updated'] ) && 'true' === $_REQUEST['updated'] && ! empty( $_REQUEST['action'] ) ) {
+if ( isset( $_REQUEST['updated'] ) && 'true' == $_REQUEST['updated'] && ! empty( $_REQUEST['action'] ) ) {
 	?>
-	<div id="message" class="notice notice-success is-dismissible"><p>
+	<div id="message" class="updated notice is-dismissible"><p>
 		<?php
 		switch ( $_REQUEST['action'] ) {
 			case 'delete':
@@ -285,8 +273,8 @@ if ( isset( $_REQUEST['updated'] ) && 'true' === $_REQUEST['updated'] && ! empty
 	<?php
 	if ( current_user_can( 'create_users' ) ) :
 		?>
-		<a href="<?php echo esc_url( network_admin_url( 'user-new.php' ) ); ?>" class="page-title-action"><?php echo esc_html_x( 'Add New', 'user' ); ?></a>
-		<?php
+		<a href="<?php echo network_admin_url( 'user-new.php' ); ?>" class="page-title-action"><?php echo esc_html_x( 'Add New', 'user' ); ?></a>
+							<?php
 	endif;
 
 	if ( strlen( $usersearch ) ) {

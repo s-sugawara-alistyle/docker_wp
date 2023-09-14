@@ -6,17 +6,14 @@
 
 /* global ajaxurl, ClipboardJS, SiteHealth, wp */
 
-jQuery( function( $ ) {
+jQuery( document ).ready( function( $ ) {
 
 	var __ = wp.i18n.__,
 		_n = wp.i18n._n,
 		sprintf = wp.i18n.sprintf,
 		clipboard = new ClipboardJS( '.site-health-copy-buttons .copy-button' ),
-		isStatusTab = $( '.health-check-body.health-check-status-tab' ).length,
 		isDebugTab = $( '.health-check-body.health-check-debug-tab' ).length,
 		pathsSizesSection = $( '#health-check-accordion-block-wp-paths-sizes' ),
-		menuCounterWrapper = $( '#adminmenu .site-health-counter' ),
-		menuCounter = $( '#adminmenu .site-health-counter .count' ),
 		successTimeout;
 
 	// Debug information copy section.
@@ -27,7 +24,7 @@ jQuery( function( $ ) {
 		// Clear the selection and move focus back to the trigger.
 		e.clearSelection();
 		// Handle ClipboardJS focus bug, see https://github.com/zenorocha/clipboard.js/issues/680
-		triggerElement.trigger( 'focus' );
+		triggerElement.focus();
 
 		// Show success visual feedback.
 		clearTimeout( successTimeout );
@@ -36,6 +33,10 @@ jQuery( function( $ ) {
 		// Hide success visual feedback after 3 seconds since last success.
 		successTimeout = setTimeout( function() {
 			successElement.addClass( 'hidden' );
+			// Remove the visually hidden textarea so that it isn't perceived by assistive technologies.
+			if ( clipboard.clipboardAction.fakeElem && clipboard.clipboardAction.removeFake ) {
+				clipboard.clipboardAction.removeFake();
+			}
 		}, 3000 );
 
 		// Handle success audible feedback.
@@ -166,19 +167,6 @@ jQuery( function( $ ) {
 			$( '.site-health-issue-count-title', issueWrapper ).html( heading );
 		}
 
-		menuCounter.text( SiteHealth.site_status.issues.critical );
-
-		if ( 0 < parseInt( SiteHealth.site_status.issues.critical, 0 ) ) {
-			$( '#health-check-issues-critical' ).removeClass( 'hidden' );
-
-			menuCounterWrapper.removeClass( 'count-0' );
-		} else {
-			menuCounterWrapper.addClass( 'count-0' );
-		}
-		if ( 0 < parseInt( SiteHealth.site_status.issues.recommended, 0 ) ) {
-			$( '#health-check-issues-recommended' ).removeClass( 'hidden' );
-		}
-
 		$( '.issues', '#health-check-issues-' + issue.status ).append( template( issue ) );
 	}
 
@@ -217,9 +205,17 @@ jQuery( function( $ ) {
 			val = 100;
 		}
 
-		pct = ( ( 100 - val ) / 100 ) * c + 'px';
+		pct = ( ( 100 - val ) / 100 ) * c;
 
 		$circle.css( { strokeDashoffset: pct } );
+
+		if ( 1 > parseInt( SiteHealth.site_status.issues.critical, 0 ) ) {
+			$( '#health-check-issues-critical' ).addClass( 'hidden' );
+		}
+
+		if ( 1 > parseInt( SiteHealth.site_status.issues.recommended, 0 ) ) {
+			$( '#health-check-issues-recommended' ).addClass( 'hidden' );
+		}
 
 		if ( 80 <= val && 0 === parseInt( SiteHealth.site_status.issues.critical, 0 ) ) {
 			$wrapper.addClass( 'green' ).removeClass( 'orange' );
@@ -233,7 +229,7 @@ jQuery( function( $ ) {
 			wp.a11y.speak( __( 'All site health tests have finished running. There are items that should be addressed, and the results are now available on the page.' ) );
 		}
 
-		if ( isStatusTab ) {
+		if ( ! isDebugTab ) {
 			$.post(
 				ajaxurl,
 				{
@@ -350,7 +346,7 @@ jQuery( function( $ ) {
 		appendIssue( wp.hooks.applyFilters( 'site_status_test_result', issue ) );
 	}
 
-	if ( 'undefined' !== typeof SiteHealth ) {
+	if ( 'undefined' !== typeof SiteHealth && ! isDebugTab ) {
 		if ( 0 === SiteHealth.site_status.direct.length && 0 === SiteHealth.site_status.async.length ) {
 			recalculateProgression();
 		} else {
@@ -447,9 +443,4 @@ jQuery( function( $ ) {
 			recalculateProgression();
 		}
 	}
-
-	// Trigger a class toggle when the extended menu button is clicked.
-	$( '.health-check-offscreen-nav-wrapper' ).on( 'click', function() {
-		$( this ).toggleClass( 'visible' );
-	} );
 } );

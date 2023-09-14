@@ -12,7 +12,6 @@
  *
  * @since 4.4.0
  */
-#[AllowDynamicProperties]
 final class WP_Comment {
 
 	/**
@@ -219,7 +218,7 @@ final class WP_Comment {
 	}
 
 	/**
-	 * Converts object to array.
+	 * Convert object to array.
 	 *
 	 * @since 4.4.0
 	 *
@@ -230,7 +229,7 @@ final class WP_Comment {
 	}
 
 	/**
-	 * Gets the children of a comment.
+	 * Get the children of a comment.
 	 *
 	 * @since 4.4.0
 	 *
@@ -302,7 +301,7 @@ final class WP_Comment {
 	}
 
 	/**
-	 * Adds a child to the comment.
+	 * Add a child to the comment.
 	 *
 	 * Used by `WP_Comment_Query` when bulk-filling descendants.
 	 *
@@ -315,12 +314,12 @@ final class WP_Comment {
 	}
 
 	/**
-	 * Gets a child comment by ID.
+	 * Get a child comment by ID.
 	 *
 	 * @since 4.4.0
 	 *
 	 * @param int $child_id ID of the child.
-	 * @return WP_Comment|false Returns the comment object if found, otherwise false.
+	 * @return WP_Comment|bool Returns the comment object if found, otherwise false.
 	 */
 	public function get_child( $child_id ) {
 		if ( isset( $this->children[ $child_id ] ) ) {
@@ -331,7 +330,7 @@ final class WP_Comment {
 	}
 
 	/**
-	 * Sets the 'populated_children' flag.
+	 * Set the 'populated_children' flag.
 	 *
 	 * This flag is important for ensuring that calling `get_children()` on a childless comment will not trigger
 	 * unneeded database queries.
@@ -345,7 +344,7 @@ final class WP_Comment {
 	}
 
 	/**
-	 * Determines whether a non-public property is set.
+	 * Check whether a non-public property is set.
 	 *
 	 * If `$name` matches a post field, the comment post will be loaded and the post's value checked.
 	 *

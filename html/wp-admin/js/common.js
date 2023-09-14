@@ -382,7 +382,7 @@ window.columns = {
 	 */
 	init : function() {
 		var that = this;
-		$('.hide-column-tog', '#adv-settings').on( 'click', function() {
+		$('.hide-column-tog', '#adv-settings').click( function() {
 			var $t = $(this), column = $t.val();
 			if ( $t.prop('checked') )
 				that.checked(column);
@@ -483,7 +483,7 @@ window.columns = {
 	}
 };
 
-$( function() { columns.init(); } );
+$document.ready(function(){columns.init();});
 
 /**
  * Validates that the required form fields are not empty.
@@ -500,7 +500,7 @@ window.validateForm = function( form ) {
 		.filter( function() { return $( ':input:visible', this ).val() === ''; } )
 		.addClass( 'form-invalid' )
 		.find( ':input:visible' )
-		.on( 'change', function() { $( this ).closest( '.form-invalid' ).removeClass( 'form-invalid' ); } )
+		.change( function() { $( this ).closest( '.form-invalid' ).removeClass( 'form-invalid' ); } )
 		.length;
 };
 
@@ -571,7 +571,7 @@ window.screenMeta = {
 		this.toggles = $( '#screen-meta-links' ).find( '.show-settings' );
 		this.page    = $('#wpcontent');
 
-		this.toggles.on( 'click', this.toggleEvent );
+		this.toggles.click( this.toggleEvent );
 	},
 
 	/**
@@ -617,7 +617,7 @@ window.screenMeta = {
 		 * @return {void}
 		 */
 		panel.slideDown( 'fast', function() {
-			panel.removeClass( 'hidden' ).trigger( 'focus' );
+			panel.focus();
 			button.addClass( 'screen-meta-active' ).attr( 'aria-expanded', true );
 		});
 
@@ -646,7 +646,6 @@ window.screenMeta = {
 			button.removeClass( 'screen-meta-active' ).attr( 'aria-expanded', false );
 			$('.screen-meta-toggle').css('visibility', '');
 			panel.parent().hide();
-			panel.addClass( 'hidden' );
 		});
 
 		$document.trigger( 'screen:options:close' );
@@ -660,7 +659,7 @@ window.screenMeta = {
  *
  * @return {void}
  */
-$('.contextual-help-tabs').on( 'click', 'a', function(e) {
+$('.contextual-help-tabs').delegate('a', 'click', function(e) {
 	var link = $(this),
 		panel;
 
@@ -752,14 +751,8 @@ $availableStructureTags.on( 'click', function() {
 	    selectionStart          = $permalinkStructure[ 0 ].selectionStart,
 	    selectionEnd            = $permalinkStructure[ 0 ].selectionEnd,
 	    textToAppend            = $( this ).text().trim(),
-	    textToAnnounce,
+	    textToAnnounce          = $( this ).attr( 'data-added' ),
 	    newSelectionStart;
-
-	if ( $( this ).hasClass( 'active' ) ) {
-		textToAnnounce = $( this ).attr( 'data-removed' );
-	} else {
-		textToAnnounce = $( this ).attr( 'data-added' );
-	}
 
 	// Remove structure tag if already part of the structure.
 	if ( -1 !== permalinkStructureValue.indexOf( textToAppend ) ) {
@@ -805,11 +798,11 @@ $availableStructureTags.on( 'click', function() {
 	if ( permalinkStructureFocused && $permalinkStructure[0].setSelectionRange ) {
 		newSelectionStart = ( permalinkStructureValue.substr( 0, selectionStart ) + textToAppend ).length;
 		$permalinkStructure[0].setSelectionRange( newSelectionStart, newSelectionStart );
-		$permalinkStructure.trigger( 'focus' );
+		$permalinkStructure.focus();
 	}
 } );
 
-$( function() {
+$document.ready( function() {
 	var checks, first, last, checked, sliced, mobileEvent, transitionTimeout, focusedRowActions,
 		lastClicked = false,
 		pageInput = $('input.current-page'),
@@ -861,7 +854,7 @@ $( function() {
 		// Reset any compensation for submenus near the bottom of the screen.
 		$('#adminmenu div.wp-submenu').css('margin-top', '');
 
-		if ( viewportWidth <= 960 ) {
+		if ( viewportWidth < 960 ) {
 			if ( $body.hasClass('auto-fold') ) {
 				$body.removeClass('auto-fold').removeClass('folded');
 				setUserSetting('unfold', 1);
@@ -938,7 +931,7 @@ $( function() {
 			adjustment = maxtop;
 		}
 
-		if ( adjustment > 1 && $('#wp-admin-bar-menu-toggle').is(':hidden') ) {
+		if ( adjustment > 1 ) {
 			$submenu.css( 'margin-top', '-' + adjustment + 'px' );
 		} else {
 			$submenu.css( 'margin-top', '' );
@@ -1227,62 +1220,6 @@ $( function() {
 	});
 
 	/**
-	 * Marries a secondary control to its primary control.
-	 *
-	 * @param {jQuery} topSelector    The top selector element.
-	 * @param {jQuery} topSubmit      The top submit element.
-	 * @param {jQuery} bottomSelector The bottom selector element.
-	 * @param {jQuery} bottomSubmit   The bottom submit element.
-	 * @return {void}
-	 */
-	function marryControls( topSelector, topSubmit, bottomSelector, bottomSubmit ) {
-		/**
-		 * Updates the primary selector when the secondary selector is changed.
-		 *
-		 * @since 5.7.0
-		 *
-		 * @return {void}
-		 */
-		function updateTopSelector() {
-			topSelector.val($(this).val());
-		}
-		bottomSelector.on('change', updateTopSelector);
-
-		/**
-		 * Updates the secondary selector when the primary selector is changed.
-		 *
-		 * @since 5.7.0
-		 *
-		 * @return {void}
-		 */
-		function updateBottomSelector() {
-			bottomSelector.val($(this).val());
-		}
-		topSelector.on('change', updateBottomSelector);
-
-		/**
-		 * Triggers the primary submit when then secondary submit is clicked.
-		 *
-		 * @since 5.7.0
-		 *
-		 * @return {void}
-		 */
-		function triggerSubmitClick(e) {
-			e.preventDefault();
-			e.stopPropagation();
-
-			topSubmit.trigger('click');
-		}
-		bottomSubmit.on('click', triggerSubmitClick);
-	}
-
-	// Marry the secondary "Bulk actions" controls to the primary controls:
-	marryControls( $('#bulk-action-selector-top'), $('#doaction'), $('#bulk-action-selector-bottom'), $('#doaction2') );
-
-	// Marry the secondary "Change role to" controls to the primary controls:
-	marryControls( $('#new_role'), $('#changeit'), $('#new_role2'), $('#changeit2') );
-
-	/**
 	 * Shows row actions on focus of its parent container element or any other elements contained within.
 	 *
 	 * @return {void}
@@ -1309,20 +1246,20 @@ $( function() {
 		$( this ).closest( 'tr' ).toggleClass( 'is-expanded' );
 	});
 
-	$('#default-password-nag-no').on( 'click', function() {
+	$('#default-password-nag-no').click( function() {
 		setUserSetting('default_password_nag', 'hide');
 		$('div.default-password-nag').hide();
 		return false;
 	});
 
 	/**
-	 * Handles tab keypresses in theme and plugin file editor textareas.
+	 * Handles tab keypresses in theme and plugin editor textareas.
 	 *
 	 * @param {Event} e The event object.
 	 *
 	 * @return {void}
 	 */
-	$('#newcontent').on('keydown.wpevent_InsertTab', function(e) {
+	$('#newcontent').bind('keydown.wpevent_InsertTab', function(e) {
 		var el = e.target, selStart, selEnd, val, scroll, sel;
 
 		// After pressing escape key (keyCode: 27), the tab key should tab out of the textarea.
@@ -1381,11 +1318,12 @@ $( function() {
 		 *
 		 * @return {void}
 		 */
-		pageInput.closest('form').on( 'submit', function() {
+		pageInput.closest('form').submit( function() {
 			/*
 			 * action = bulk action dropdown at the top of the table
+			 * action2 = bulk action dropdow at the bottom of the table
 			 */
-			if ( $('select[name="action"]').val() == -1 && pageInput.val() == currentPage )
+			if ( $('select[name="action"]').val() == -1 && $('select[name="action2"]').val() == -1 && pageInput.val() == currentPage )
 				pageInput.val('1');
 		});
 	}
@@ -1395,7 +1333,7 @@ $( function() {
 	 *
 	 * @return {void}
 	 */
-	$('.search-box input[type="search"], .search-box input[type="submit"]').on( 'mousedown', function () {
+	$('.search-box input[type="search"], .search-box input[type="submit"]').mousedown(function () {
 		$('select[name^="action"]').val('-1');
 	});
 
@@ -1407,8 +1345,8 @@ $( function() {
 	 * @return {void}
  	 */
 	$('#contextual-help-link, #show-settings-link').on( 'focus.scroll-into-view', function(e){
-		if ( e.target.scrollIntoViewIfNeeded )
-			e.target.scrollIntoViewIfNeeded(false);
+		if ( e.target.scrollIntoView )
+			e.target.scrollIntoView(false);
 	});
 
 	/**
@@ -1696,30 +1634,11 @@ $( function() {
 				$wpwrap.toggleClass( 'wp-responsive-open' );
 				if ( $wpwrap.hasClass( 'wp-responsive-open' ) ) {
 					$(this).find('a').attr( 'aria-expanded', 'true' );
-					$( '#adminmenu a:first' ).trigger( 'focus' );
+					$( '#adminmenu a:first' ).focus();
 				} else {
 					$(this).find('a').attr( 'aria-expanded', 'false' );
 				}
 			} );
-
-			// Close sidebar when focus moves outside of toggle and sidebar.
-			$( '#wp-admin-bar-menu-toggle, #adminmenumain' ).on( 'focusout', function() {
-				var focusIsInToggle, focusIsInSidebar;
-
-				if ( ! $wpwrap.hasClass( 'wp-responsive-open' ) || ! document.hasFocus() ) {
-					return;
-				}
-				// A brief delay is required to allow focus to switch to another element.
-				setTimeout( function() {
-					focusIsInToggle  = $.contains( $( '#wp-admin-bar-menu-toggle' )[0], $( ':focus' )[0] );
-					focusIsInSidebar = $.contains( $( '#adminmenumain' )[0], $( ':focus' )[0] );
-
-					if ( ! focusIsInToggle && ! focusIsInSidebar ) {
-						$( '#wp-admin-bar-menu-toggle' ).trigger( 'click.wp-responsive' );
-					}
-				}, 10 );
-			} );
-
 
 			// Add menu events.
 			$adminmenu.on( 'click.wp-responsive', 'li.wp-has-submenu > a', function( event ) {
@@ -1728,14 +1647,13 @@ $( function() {
 				}
 
 				$( this ).parent( 'li' ).toggleClass( 'selected' );
-				$( this ).trigger( 'focus' );
 				event.preventDefault();
 			});
 
 			self.trigger();
-			$document.on( 'wp-window-resized.wp-responsive', this.trigger.bind( this ) );
+			$document.on( 'wp-window-resized.wp-responsive', $.proxy( this.trigger, this ) );
 
-			// This needs to run later as UI Sortable may be initialized when the document is ready.
+			// This needs to run later as UI Sortable may be initialized later on $(document).ready().
 			$window.on( 'load.wp-responsive', this.maybeDisableSortables );
 			$document.on( 'postbox-toggled', this.maybeDisableSortables );
 
@@ -1916,7 +1834,7 @@ $( function() {
 		$( '.aria-button-if-js' ).attr( 'role', 'button' );
 	}
 
-	$( document ).on( 'ajaxComplete', function() {
+	$( document ).ajaxComplete( function() {
 		aria_button_if_js();
 	});
 
@@ -2005,7 +1923,7 @@ $( function() {
 	$document.on( 'wp-pin-menu wp-window-resized.pin-menu postboxes-columnchange.pin-menu postbox-toggled.pin-menu wp-collapse-menu.pin-menu wp-scroll-start.pin-menu', setPinMenu );
 
 	// Set initial focus on a specific element.
-	$( '.wp-initial-focus' ).trigger( 'focus' );
+	$( '.wp-initial-focus' ).focus();
 
 	// Toggle update details on update-core.php.
 	$body.on( 'click', '.js-update-details-toggle', function() {
@@ -2035,7 +1953,7 @@ $( function() {
  *
  * @since 5.5.0
  */
-$( function( $ ) {
+$document.ready( function( $ ) {
 	var $overwrite, $warning;
 
 	if ( ! $body.hasClass( 'update-php' ) ) {

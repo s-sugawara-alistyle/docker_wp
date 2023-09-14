@@ -2,7 +2,7 @@
  * @output wp-admin/js/user-profile.js
  */
 
-/* global ajaxurl, pwsL10n, userProfileL10n */
+/* global ajaxurl, pwsL10n */
 (function($) {
 	var updateLock = false,
 		__ = wp.i18n.__,
@@ -32,13 +32,6 @@
 			showOrHideWeakPasswordCheckbox();
 		}
 
-		/*
-		 * This works around a race condition when zxcvbn loads quickly and
-		 * causes `generatePassword()` to run prior to the toggle button being
-		 * bound.
-		 */
-		bindToggleButton();
-
 		// Install screen.
 		if ( 1 !== parseInt( $toggleButton.data( 'start-masked' ), 10 ) ) {
 			// Show the password not masked if admin_password hasn't been posted yet.
@@ -50,11 +43,6 @@
 
 		// Once zxcvbn loads, passwords strength is known.
 		$( '#pw-weak-text-label' ).text( __( 'Confirm use of weak password' ) );
-
-		// Focus the password field.
-		if ( 'mailserver_pass' !== $pass1.prop('id' ) ) {
-			$( $pass1 ).trigger( 'focus' );
-		}
 	}
 
 	function bindPass1() {
@@ -91,10 +79,6 @@
 	}
 
 	function bindToggleButton() {
-		if ( !! $toggleButton ) {
-			// Do not rebind.
-			return;
-		}
 		$toggleButton = $pass1Row.find('.wp-hide-pw');
 		$toggleButton.show().on( 'click', function () {
 			if ( 'password' === $pass1.attr( 'type' ) ) {
@@ -107,73 +91,11 @@
 		});
 	}
 
-	/**
-	 * Handle the password reset button. Sets up an ajax callback to trigger sending
-	 * a password reset email.
-	 */
-	function bindPasswordResetLink() {
-		$( '#generate-reset-link' ).on( 'click', function() {
-			var $this  = $(this),
-				data = {
-					'user_id': userProfileL10n.user_id, // The user to send a reset to.
-					'nonce':   userProfileL10n.nonce    // Nonce to validate the action.
-				};
-
-				// Remove any previous error messages.
-				$this.parent().find( '.notice-error' ).remove();
-
-				// Send the reset request.
-				var resetAction =  wp.ajax.post( 'send-password-reset', data );
-
-				// Handle reset success.
-				resetAction.done( function( response ) {
-					addInlineNotice( $this, true, response );
-				} );
-
-				// Handle reset failure.
-				resetAction.fail( function( response ) {
-					addInlineNotice( $this, false, response );
-				} );
-
-		});
-
-	}
-
-	/**
-	 * Helper function to insert an inline notice of success or failure.
-	 *
-	 * @param {jQuery Object} $this   The button element: the message will be inserted
-	 *                                above this button
-	 * @param {bool}          success Whether the message is a success message.
-	 * @param {string}        message The message to insert.
-	 */
-	function addInlineNotice( $this, success, message ) {
-		var resultDiv = $( '<div />' );
-
-		// Set up the notice div.
-		resultDiv.addClass( 'notice inline' );
-
-		// Add a class indicating success or failure.
-		resultDiv.addClass( 'notice-' + ( success ? 'success' : 'error' ) );
-
-		// Add the message, wrapping in a p tag, with a fadein to highlight each message.
-		resultDiv.text( $( $.parseHTML( message ) ).text() ).wrapInner( '<p />');
-
-		// Disable the button when the callback has succeeded.
-		$this.prop( 'disabled', success );
-
-		// Remove any previous notices.
-		$this.siblings( '.notice' ).remove();
-
-		// Insert the notice.
-		$this.before( resultDiv );
-	}
-
 	function bindPasswordForm() {
 		var $generateButton,
 			$cancelButton;
 
-		$pass1Row = $( '.user-pass1-wrap, .user-pass-wrap, .mailserver-pass-wrap, .reset-pass-submit' );
+		$pass1Row = $( '.user-pass1-wrap, .user-pass-wrap' );
 
 		// Hide the confirm password field when JavaScript support is enabled.
 		$('.user-pass2-wrap').hide();
@@ -186,11 +108,11 @@
 
 		$weakRow = $( '.pw-weak' );
 		$weakCheckbox = $weakRow.find( '.pw-checkbox' );
-		$weakCheckbox.on( 'change', function() {
+		$weakCheckbox.change( function() {
 			$submitButtons.prop( 'disabled', ! $weakCheckbox.prop( 'checked' ) );
 		} );
 
-		$pass1 = $('#pass1, #mailserver_pass');
+		$pass1 = $('#pass1');
 		if ( $pass1.length ) {
 			bindPass1();
 		} else {
@@ -229,7 +151,7 @@
 			updateLock = true;
 
 			// Make sure the password fields are shown.
-			$generateButton.not( '.skip-aria-expanded' ).attr( 'aria-expanded', 'true' );
+			$generateButton.attr( 'aria-expanded', 'true' );
 			$passwordWrapper
 				.show()
 				.addClass( 'is-open' );
@@ -270,8 +192,6 @@
 
 			// Stop an empty password from being submitted as a change.
 			$submitButtons.prop( 'disabled', false );
-
-			$generateButton.attr( 'aria-expanded', 'false' );
 		} );
 
 		$pass1Row.closest( 'form' ).on( 'submit', function () {
@@ -316,32 +236,28 @@
 	}
 
 	function showOrHideWeakPasswordCheckbox() {
-		var passStrengthResult = $('#pass-strength-result');
+		var passStrength = $('#pass-strength-result')[0];
 
-		if ( passStrengthResult.length ) {
-			var passStrength = passStrengthResult[0];
-
-			if ( passStrength.className ) {
-				$pass1.addClass( passStrength.className );
-				if ( $( passStrength ).is( '.short, .bad' ) ) {
-					if ( ! $weakCheckbox.prop( 'checked' ) ) {
-						$submitButtons.prop( 'disabled', true );
-					}
-					$weakRow.show();
-				} else {
-					if ( $( passStrength ).is( '.empty' ) ) {
-						$submitButtons.prop( 'disabled', true );
-						$weakCheckbox.prop( 'checked', false );
-					} else {
-						$submitButtons.prop( 'disabled', false );
-					}
-					$weakRow.hide();
+		if ( passStrength.className ) {
+			$pass1.addClass( passStrength.className );
+			if ( $( passStrength ).is( '.short, .bad' ) ) {
+				if ( ! $weakCheckbox.prop( 'checked' ) ) {
+					$submitButtons.prop( 'disabled', true );
 				}
+				$weakRow.show();
+			} else {
+				if ( $( passStrength ).is( '.empty' ) ) {
+					$submitButtons.prop( 'disabled', true );
+					$weakCheckbox.prop( 'checked', false );
+				} else {
+					$submitButtons.prop( 'disabled', false );
+				}
+				$weakRow.hide();
 			}
 		}
 	}
 
-	$( function() {
+	$(document).ready( function() {
 		var $colorpicker, $stylesheet, user_id, current_user_id,
 			select       = $( '#display_name' ),
 			current_name = select.val(),
@@ -349,12 +265,12 @@
 
 		$( '#pass1' ).val( '' ).on( 'input' + ' pwupdate', check_pass_strength );
 		$('#pass-strength-result').show();
-		$('.color-palette').on( 'click', function() {
+		$('.color-palette').click( function() {
 			$(this).siblings('input[name="admin_color"]').prop('checked', true);
 		});
 
 		if ( select.length ) {
-			$('#first_name, #last_name, #nickname').on( 'blur.user_profile', function() {
+			$('#first_name, #last_name, #nickname').bind( 'blur.user_profile', function() {
 				var dub = [],
 					inputs = {
 						display_nickname  : $('#nickname').val() || '',
@@ -396,7 +312,7 @@
 					return;
 				}
 
-				var display_name = this.value.trim() || current_name;
+				var display_name = $.trim( this.value ) || current_name;
 
 				greeting.text( display_name );
 			} );
@@ -430,7 +346,7 @@
 				// Repaint icons.
 				if ( typeof wp !== 'undefined' && wp.svgPainter ) {
 					try {
-						colors = JSON.parse( $this.children( '.icon_colors' ).val() );
+						colors = $.parseJSON( $this.children( '.icon_colors' ).val() );
 					} catch ( error ) {}
 
 					if ( colors ) {
@@ -453,7 +369,6 @@
 		});
 
 		bindPasswordForm();
-		bindPasswordResetLink();
 	});
 
 	$( '#destroy-sessions' ).on( 'click', function( e ) {
@@ -482,16 +397,5 @@
 			return __( 'Your new password has not been saved.' );
 		}
 	} );
-
-	/*
-	 * We need to generate a password as soon as the Reset Password page is loaded,
-	 * to avoid double clicking the button to retrieve the first generated password.
-	 * See ticket #39638.
-	 */
-	$( function() {
-		if ( $( '.reset-pass-submit' ).length ) {
-			$( '.reset-pass-submit button.wp-generate-pw' ).trigger( 'click' );
-		}
-	});
 
 })(jQuery);
